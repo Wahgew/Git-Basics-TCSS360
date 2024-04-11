@@ -1,0 +1,50 @@
+; Routine to Encrypt the message using given algorithm
+ENCRYPT_MESSAGE
+            ST          R7, SAVER7                  ;Store R7 in the Memory Location of SAVER7
+ELOOP       LDI         R4, MESSAGE_POINTER         ;Load R4 with the contents of the Memory location referenced by MESSAGE_POINTER
+            BRz         EXIT                        ;If it is 0 or null, branch to EXIT
+            LDI         R1, KEY                     ;Load R1 with the contents of the memory location referenced by KEY
+            AND         R2, R4, #1                  ;Store R4 and #1 which returns the value of the least significant bit
+            BRz         ZERO                        ;If it is 0, branch to ZERO
+            ADD         R4, R4, #-1                 ;Add R4 and #-1 to flip the least significant 1 to a 0 and store in R4
+            BRnzp       STORE                       ;Branch to Store
+ZERO        ADD         R4, R4, #1                  ;Add R4 and #1 to flip the least significant 0 to a 1 and store in R4
+            BRnzp       STORE                       ;Branch to Store
+STORE       ADD         R4, R4, R1                  ;Add R4 and R1 (value of Key) and store it in R4
+            AND         R0, R4, #-1                 ;Copy R4 into R0
+            JSR         STORE_INPUT                 ;Calling STORE_INPUT to store R0 at the correct memory location after x3102
+            BR          ELOOP                       ;Branch to ELOOP
+EXIT        LD          R7, SAVER7                  ;Load value of SAVER7 to R7
+            RET                                     ;Return
+
+; Routine to Decrypt the message using given algorithm
+DECRYPT_MESSAGE
+            ST          R7, SAVER7                  ;Store R7 in the Memory Location of SAVER7
+DLOOP       LDI         R4, MESSAGE_POINTER         ;Load R4 with the contents of the Memory location referenced by MESSAGE_POINTER
+            BRz         DEXIT                       ;If it is 0 or null, branch to DEXIT
+            LDI         R1, KEY                     ;Load R1 with the contents of the memory location referenced by KEY
+            NOT         R1, R1                      ;Negate R1 and store it in R1
+            ADD         R1, R1, #1                  ;Add 1 to R1 and store in R1 
+            ADD         R4, R4, R1                  ;Add R1 to R4 (Subtract Key from given value)
+            AND         R2, R4, #1                  ;Store R4 and #1 which returns the value of the least significant bit
+            BRz         DZERO                       ;If it is 0, branch to ZERO
+            ADD         R4, R4, #-1                 ;Add R4 and #-1 to flip the least significant 1 to a 0 and store in R4
+            BRnzp       DSTORE                      ;Branch to DStore
+DZERO       ADD         R4, R4, #1                  ;Add R4 and #1 to flip the least significant 0 to a 1 and store in R4
+            BRnzp       DSTORE                      ;Branch to DStore
+DSTORE      AND         R0, R4, #-1                 ;Copy R4 into R0
+            JSR         STORE_INPUT                 ;Calling STORE_INPUT to store R0 at the correct memory location after x3102
+            BR          DLOOP                       ;Branch to DLOOP
+DEXIT       LD          R7, SAVER7                  ;Load value of SAVER7 to R7
+            RET                                     ;Return
+
+; Helper Routine to Output the message in the correct order using MESSAGE_POINTER
+OUTPUT_MESSAGE
+REPEAT      LD          R5, MESSAGE_POINTER         ;Load R5 with contents of MESSAGE_POINTER
+            LDI         R0, MESSAGE_POINTER         ;Load R0 with the value of Memory Address referenced by MESSAGE_POINTER
+            BRz         OEXIT                       ;If it is zero, Branch to OEXIT
+            OUT                                     ;Output Charecter
+            ADD         R5, R5, #1                  ;Iterate R5 by 1
+            ST          R5, MESSAGE_POINTER         ;Store R5 into MESSAGE_POINTER
+            BR          REPEAT                      ;Branch to REPEAT
+OEXIT       RET                                     ;Return
